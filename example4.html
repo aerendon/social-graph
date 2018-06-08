@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<script src="http://d3js.org/d3.v2.min.js?2.9.3"></script>
+<style>
+
+.link {
+  stroke: #aaa;
+}
+
+.node text {
+cursos:pointer;
+}
+
+.node circle{
+stroke:#fff;
+stroke-width:3px;
+fill:#555;
+}
+
+</style>
+<body>
+<script>
+  
+var nodeFontSize = 20;
+
+  function redraw() {
+    window.console && console.log("here", d3.event.translate, d3.event.scale);
+    svg.attr("transform",
+      "translate(" + d3.event.translate + ")"
+      + " scale(" + d3.event.scale + ")");
+    d3.selectAll("text").style("font-size", (nodeFontSize / d3.event.scale) + "px");
+    d3.selectAll("image").style("width", (64 / d3.event.scale) + "px");
+  }
+
+var svg = d3.select("body").append("svg:svg").attr("height", screen.height).attr("width", screen.width)
+  .call(d3.behavior.zoom().on("zoom", redraw))
+  .append("g");
+
+
+
+var force = d3.layout.force()
+    .gravity(.05)
+    .distance(100)
+    .charge(-100)
+    .size([screen.width, screen.height]);
+
+d3.json("example4.json", function(json) {
+  force
+      .nodes(json.nodes)
+      .links(json.links)
+      .start();
+
+  var link = svg.selectAll(".link")
+      .data(json.links)
+    .enter().append("line")
+      .attr("class", "link")
+    .style("stroke-width", function(d) { return Math.sqrt(d.weight); });
+
+  var node = svg.selectAll(".node")
+      .data(json.nodes)
+    .enter().append("g")
+      .attr("class", "node")
+      .call(force.drag);
+
+    // node.append("circle")
+    //     .attr("r","5");
+  node.append("image")
+      .attr("xlink:href", function (d) { return d.image })
+      .attr("x", -16)
+      .attr("y", -16)
+      .attr("width", 32)
+      .attr("height", 32);
+
+  node.append("text")
+      .attr("dx", 10)
+      .attr("dy", ".15em")
+      .text(function(d) { return d.name });
+
+  force.on("tick", function() {
+    link.attr("x1", function(d) { return d.source.x; })
+        .attr("y1", function(d) { return d.source.y; })
+        .attr("x2", function(d) { return d.target.x; })
+        .attr("y2", function(d) { return d.target.y; });
+
+    node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+  });
+});
+
+</script>
